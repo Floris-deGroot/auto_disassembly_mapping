@@ -1,0 +1,31 @@
+# Secrets
+.env
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# Data — videos, clips, manifests, model outputs, archived runs
+data/raw/*
+data/clips/*
+data/clips_no_narration/*
+data/manifest/*
+data/output/*
+successful_runs/
+
+# Keep empty data dirs in git
+!data/raw/.gitkeep
+!data/clips/.gitkeep
+!data/manifest/.gitkeep
+!data/output/.gitkeep

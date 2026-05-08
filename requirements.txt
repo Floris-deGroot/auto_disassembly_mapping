@@ -1,0 +1,4 @@
+pynput
+google-genai
+obsws-python
+python-dotenv

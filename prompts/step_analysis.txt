@@ -1,0 +1,107 @@
+You are analyzing a short video clip from a manual product disassembly. The clip contains two phases back-to-back:
+
+1. **Action phase** (0s to <<action_split_s>>s): the operator performing a physical disassembly step with a top-down camera.
+2. **Narration phase** (<<action_split_s>>s to <<duration_s>>s): the operator speaking about the step they just performed — describing tool, connector, force, surprises, etc.
+
+This is step <<step_number>> of a teardown of: <<product>>.
+
+## Your task
+
+Produce a single JSON object annotating this step. Follow the schema exactly. Return ONLY the JSON — no markdown fences, no commentary before or after.
+
+## Priorities — read carefully
+
+1. **Transcribe the narration first.** The operator's spoken annotation is the most reliable signal in this clip. Capture it verbatim in `narration_transcript`, then use it to inform every other field. If the operator says "this was a snap-fit", trust that over your visual inference.
+
+2. **Always report confidence.** Every field that asks for confidence must include `high`, `medium`, or `low`. Low confidence is a valid and valuable answer. Do not inflate confidence to seem decisive — the research goal is to know where the model is uncertain.
+
+3. **Separate observation from inference.** If you say the connector is adhesive, say whether you saw adhesive residue (observation) or inferred it from a peeling motion (inference). Put this in the `reasoning` and `visual_cues` fields.
+
+4. **Name what is invisible.** Force, haptic feedback, internal connector geometry, and sounds masked by narration are expected blind spots. If you cannot determine force because the hand occludes the part, say so explicitly in `model_uncertainties`. Do not guess.
+
+5. **Acoustic events**: only report transient sounds heard in the *action phase* (before the narration begins). Ignore the narration itself. If you cannot hear the action clearly, leave the list empty.
+
+## Field definitions
+
+- **component_removed**: the part that was detached from the assembly during this step. If nothing was removed (e.g. an exploratory probe), set `name` to `"none"`.
+- **tool_observed.type**: `hands` if no tool was used; `unidentifiable` if a tool was used but you cannot tell what.
+- **action_type.primary**: the dominant motion. If multiple motions occurred, pick the one that accomplished the separation.
+- **connector_type**: the type of physical joint that was overcome this step. Use `unknown` rather than guessing.
+- **force_estimate**: qualitative. `low` = single finger, `moderate` = whole hand steady effort, `high` = visible strain, bracing, or tool leverage.
+- **connector_survived.reusable**: `true` if the connector could plausibly be reconnected; `false` if it broke, deformed, or had to be cut.
+- **penalties** (all booleans):
+    - `product_manipulation`: the operator had to reposition, flip, or reorient the whole product.
+    - `hidden_connector`: the connector was not visible before disassembly began this step.
+    - `uncommon_tool`: a tool beyond basic hand tools (screwdriver, pliers, spudger).
+    - `non_reusable_connector`: the connector was destroyed by removal.
+- **automation_suitability.rating**:
+    - `straightforward`: a fixed-program robot with basic grippers could do this.
+    - `feasible_with_sensing`: needs force/vision feedback but is solvable.
+    - `very_difficult`: would need adaptive manipulation, tactile sensing, or custom end-effectors.
+    - `impossible_without_redesign`: the product itself must change for automation to be viable.
+
+## JSON schema to return
+
+```json
+{
+  "step_number": <<step_number>>,
+  "description": "",
+  "narration_transcript": "",
+
+  "component_removed": {
+    "name": "",
+    "description": ""
+  },
+
+  "tool_observed": {
+    "type": "hands | spudger | pliers | screwdriver | heat_gun | knife | other | unidentifiable",
+    "confidence": "high | medium | low"
+  },
+
+  "action_type": {
+    "primary": "pulling | prying | twisting | cutting | unscrewing | peeling | sliding | other",
+    "confidence": "high | medium | low"
+  },
+
+  "connector_type": {
+    "type": "snap_fit | friction_fit | adhesive | screw | weld | crimp | unknown",
+    "confidence": "high | medium | low",
+    "reasoning": ""
+  },
+
+  "force_estimate": {
+    "level": "low | moderate | high | unknown",
+    "visual_cues": "",
+    "confidence": "high | medium | low"
+  },
+
+  "connector_survived": {
+    "reusable": true,
+    "notes": ""
+  },
+
+  "penalties": {
+    "product_manipulation": false,
+    "hidden_connector": false,
+    "uncommon_tool": false,
+    "non_reusable_connector": false
+  },
+
+  "automation_suitability": {
+    "rating": "straightforward | feasible_with_sensing | very_difficult | impossible_without_redesign",
+    "reasoning": "",
+    "confidence": "high | medium | low"
+  },
+
+  "acoustic_events": [
+    {
+      "timestamp_in_clip_s": 0.0,
+      "description": ""
+    }
+  ],
+
+  "model_uncertainties": []
+}
+```
+
+Return only valid JSON. No markdown code fences. No prose before or after.

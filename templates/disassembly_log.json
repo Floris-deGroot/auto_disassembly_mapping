@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "product": "small electronic device",
+    "date": "",
+    "operator": "Floris",
+    "target_components": {
+      "primary": ["Lithium battery"],
+      "secondary": ["PCB", "Charging port"]
+    },
+    "total_steps": 0,
+    "total_duration_s": 0,
+    "video_source": "filename.mp4"
+  },
+  "steps": [],
+  "summary": {
+    "tool_changes": 0,
+    "connector_distribution": {},
+    "penalty_counts": {},
+    "automation_suitability_distribution": {},
+    "model_confidence_summary": {}
+  },
+  "dependencies": {
+    "note": "To be filled during human review",
+    "sequential": [],
+    "independent": [],
+    "multiple": []
+  }
+}
