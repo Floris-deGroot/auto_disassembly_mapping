@@ -2,7 +2,7 @@
   "metadata": {
     "product": "small electronic device",
     "date": "",
-    "operator": "Floris",
+    "operator": "",
     "target_components": {
       "primary": ["Lithium battery"],
       "secondary": ["PCB", "Charging port"]

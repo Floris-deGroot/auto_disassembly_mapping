@@ -10,7 +10,7 @@ LOG_JSON_PATH = os.path.join(OUTPUT_DIR, "disassembly_log.json")
 LOG_MD_PATH = os.path.join(OUTPUT_DIR, "disassembly_log.md")
 
 PRODUCT = "small electronic device"
-OPERATOR = "Floris"
+OPERATOR = ""
 TARGET_COMPONENTS = {
     "primary": ["Lithium battery"],
     "secondary": ["PCB", "Charging port"],
