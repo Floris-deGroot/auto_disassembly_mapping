@@ -360,7 +360,7 @@ This is a nice-to-have. Build it last, keep it simple. Even just logging "transi
   "metadata": {
     "product": "Disposable vape [brand/model if known]",
     "date": "2026-04-24",
-    "operator": "Floris",
+    "operator": "",
     "target_components": {
       "primary": ["Lithium battery"],
       "secondary": ["PCB", "Charging port"]
