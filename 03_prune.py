@@ -23,7 +23,12 @@ def extract_thumbnail(clip_path, duration, out_path):
 
 
 def open_file(path):
-    subprocess.Popen(["open", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    """Open a file in the system default app (tested on macOS; Windows/Linux untested)."""
+    if sys.platform == "win32":
+        os.startfile(path)
+        return
+    opener = "open" if sys.platform == "darwin" else "xdg-open"
+    subprocess.Popen([opener, path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def prompt_user(step_num):

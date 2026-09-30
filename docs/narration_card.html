@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disassembly narration prompt card</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #f5f4f0;
+  color: #2c2c2a;
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+@media print {
+  body { background: white; padding: 12px; font-size: 11pt; }
+  .no-print { display: none; }
+  .card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+  .header { background: #2c2c2a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+.header {
+  background: #2c2c2a;
+  color: #f5f4f0;
+  padding: 20px 24px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.header span {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #eee;
+}
+
+.card-body { padding: 16px 20px; }
+
+.prompt-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0efe8;
+  align-items: start;
+}
+
+.prompt-row:last-child { border-bottom: none; }
+
+.prompt-label {
+  font-weight: 500;
+  font-size: 14px;
+  color: #444;
+}
+
+.prompt-say {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.option {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.opt-green { background: #e8f5e0; color: #3b6d11; }
+.opt-amber { background: #faeeda; color: #854f0b; }
+.opt-red { background: #fcebeb; color: #a32d2d; }
+.opt-blue { background: #e6f1fb; color: #185fa5; }
+.opt-purple { background: #eeedfe; color: #534ab7; }
+.opt-gray { background: #f1efe8; color: #5f5e5a; }
+.opt-teal { background: #e1f5ee; color: #0f6e56; }
+
+.section-note {
+  font-size: 13px;
+  color: #888;
+  font-style: italic;
+  padding: 8px 0 4px;
+  line-height: 1.5;
+}
+
+.checklist {
+  list-style: none;
+  padding: 0;
+}
+
+.checklist li {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0efe8;
+  font-size: 14px;
+  display: flex;
+  align-items: start;
+  gap: 10px;
+}
+
+.checklist li:last-child { border-bottom: none; }
+
+.checklist li::before {
+  content: "□";
+  font-size: 16px;
+  color: #aaa;
+  flex-shrink: 0;
+  margin-top: -1px;
+}
+
+.step-flow {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #666;
+  background: #fafaf6;
+  padding: 14px 18px;
+  border-radius: 6px;
+  line-height: 2;
+}
+
+.step-flow strong {
+  color: #2c2c2a;
+  font-weight: 500;
+}
+
+.hotkey-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: #2c2c2a;
+  color: #f5f4f0;
+  border-radius: 5px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.divider {
+  height: 1px;
+  background: #e8e7e0;
+  margin: 4px 0;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Disassembly narration card</h1>
+  <span>De Fazio method</span>
+</div>
+
+<div class="cards">
+
+  <div class="card">
+    <div class="card-header" style="background:#f0efe8; color:#5f5e5a;">Workflow per step</div>
+    <div class="card-body">
+      <div class="step-flow">
+        <strong>1.</strong> Perform the disassembly action<br>
+        <strong>2.</strong> Place removed component in staging area<br>
+        <strong>3.</strong> Press <span class="hotkey-badge">SPACE</span> to mark step boundary<br>
+        <strong>4.</strong> Narrate the parameters below<br>
+        <strong>5.</strong> Press <span class="hotkey-badge">SPACE</span> again when ready for next step
+      </div>
+      <p class="section-note">The narration window between two key presses captures your observations for that step.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" style="background:#eeedfe; color:#534ab7;">Say after each step</div>
+    <div class="card-body">
+
+      <div class="prompt-row">
+        <div class="prompt-label">Component</div>
+        <div class="prompt-say">"I just removed the [name/description]"</div>
+      </div>
+
+      <div class="prompt-row">
+        <div class="prompt-label">Connector type</div>
+        <div>
+          <div class="prompt-say">"It was connected by..."</div>
+          <div class="options">
+            <span class="option opt-green">snap-fit</span>
+            <span class="option opt-green">friction fit</span>
+            <span class="option opt-amber">adhesive</span>
+            <span class="option opt-amber">screw</span>
+            <span class="option opt-red">welded</span>
+            <span class="option opt-gray">crimped</span>
+            <span class="option opt-gray">other</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompt-row">
+        <div class="prompt-label">Tool used</div>
+        <div>
+          <div class="prompt-say">"I used..."</div>
+          <div class="options">
+            <span class="option opt-green">hands only</span>
+            <span class="option opt-blue">spudger</span>
+            <span class="option opt-blue">pliers</span>
+            <span class="option opt-purple">screwdriver</span>
+            <span class="option opt-purple">heat gun</span>
+            <span class="option opt-gray">knife/blade</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompt-row">
+        <div class="prompt-label">Force level</div>
+        <div>
+          <div class="prompt-say">"The force was..."</div>
+          <div class="options">
+            <span class="option opt-green">low · fingertip · &lt;5N</span>
+            <span class="option opt-amber">moderate · wrist · 5–20N</span>
+            <span class="option opt-red">high · arm/body · &gt;20N</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompt-row">
+        <div class="prompt-label">Connector survived?</div>
+        <div class="prompt-say">"The connector is [intact / damaged / destroyed]"</div>
+      </div>
+
+      <div class="prompt-row">
+        <div class="prompt-label">Visibility</div>
+        <div class="prompt-say">"The connector was [visible / hidden before starting]"</div>
+      </div>
+
+      <div class="prompt-row">
+        <div class="prompt-label">Repositioning?</div>
+        <div class="prompt-say">"I [did / did not] need to reposition the product"</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" style="background:#e1f5ee; color:#0f6e56;">Dependencies (ask yourself)</div>
+    <div class="card-body">
+      <ul class="checklist">
+        <li>Was this step necessary to reach the target component?</li>
+        <li>Could something else have been removed first instead?</li>
+        <li>Could this have been done in parallel with another step?</li>
+        <li>Is the next step blocked until this one is complete?</li>
+      </ul>
+      <p class="section-note">Say it out loud: "This step was [required before / independent of] the previous one"</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" style="background:#f1efe8; color:#5f5e5a;">Before you start</div>
+    <div class="card-body">
+      <ul class="checklist">
+        <li>Camera positioned top-down with ruler in frame for scale</li>
+        <li>Clear staging area to the side for removed components</li>
+        <li>OBS open (video + audio), not recording yet</li>
+        <li>Hotkey logger running (01_capture.py), press R to start recording</li>
+        <li>Tools laid out: spudger, pliers, screwdriver set, blade</li>
+        <li>State target components on camera before starting</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<p class="section-note no-print" style="text-align:center; margin-top:20px;">
+  Print this page or keep it on a second screen during the teardown.
+</p>
+
+</body>
+</html>

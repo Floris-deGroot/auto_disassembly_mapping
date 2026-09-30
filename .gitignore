@@ -29,3 +29,6 @@ successful_runs/
 !data/clips/.gitkeep
 !data/manifest/.gitkeep
 !data/output/.gitkeep
+
+# Local Claude Code settings
+.claude/

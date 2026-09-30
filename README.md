@@ -4,7 +4,7 @@ A research prototype that processes a recorded video of a manual product teardow
 
 The annotation structure is based on the **Disassembly Map method** (De Fazio et al., 2021), capturing tool, connector type, force, reusability, and automation suitability per step.
 
-See [DISASSEMBLY_PIPELINE_SPEC.md](DISASSEMBLY_PIPELINE_SPEC.md) for the full design rationale.
+See [DISASSEMBLY_PIPELINE_SPEC.md](DISASSEMBLY_PIPELINE_SPEC.md) for the full design rationale, or the [project page](https://floris-degroot.github.io/auto_disassembly_mapping/) for a step-by-step setup guide.
 
 ## How it works
 
@@ -19,11 +19,13 @@ You record yourself disassembling a product with OBS (top-down camera + audio) a
 
 ```bash
 pip install -r requirements.txt
-brew install ffmpeg
+brew install ffmpeg          # Windows: winget install Gyan.FFmpeg   Linux: sudo apt install ffmpeg
 cp .env.example .env
 ```
 
-Then add API key and OBS Stream key to `.env`:
+I only tested this on macOS.
+
+Then add your Gemini API key and OBS WebSocket password to `.env`:
 
 - `GEMINI_API_KEY` — get one at [aistudio.google.com](https://aistudio.google.com)
 - `OBS_WS_PASSWORD` — from OBS → Tools → WebSocket Server Settings
@@ -90,3 +92,7 @@ python archive_run.py
 - Each script is standalone and idempotent — re-run any stage without side effects.
 - Run at your own risk, I dont know what might happen in your environment
 - This is just a prototype, there is lots of room for improvement, but it did what it needed to do for me
+
+## References
+
+De Fazio, F., Bakker, C., Flipsen, B., & Balkenende, R. (2021). The Disassembly Map: A new method to enhance design for product repairability. *Journal of Cleaner Production, 320*, 128552. https://doi.org/10.1016/j.jclepro.2021.128552

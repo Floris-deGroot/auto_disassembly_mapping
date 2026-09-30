@@ -2,7 +2,7 @@
 
 ## Context
 
-This is a research prototype for a TU Delft MSc graduation project on shared-use disassembly tools. The pipeline processes a recorded video of a manual product teardown (disposable vape, possibly electric toothbrush) and attempts to automatically generate structured disassembly annotations using an LLM vision model.
+This is a research prototype for a TU Delft MSc graduation project on shared-use disassembly tools. The pipeline processes a recorded video of a manual product teardown and attempts to automatically generate structured disassembly annotations using an LLM vision model.
 
 The core research question this prototype explores: **"How much disassembly knowledge can transfer through observation alone?"** — the gap between what the pipeline captures and what it misses motivates the design of physical tools with embedded sensing.
 
@@ -336,7 +336,7 @@ The markdown output should be formatted as a table for easy scanning:
 ```json
 {
   "metadata": {
-    "product": "Disposable vape [brand/model if known]",
+    "product": "small electronic device",
     "date": "2026-04-24",
     "operator": "",
     "target_components": {

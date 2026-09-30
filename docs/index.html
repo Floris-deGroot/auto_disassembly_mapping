@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Disassembly annotation pipeline</title>
+  <meta name="description" content="Record a product teardown, talk through each step, and get a structured disassembly log back from Gemini.">
+  <meta property="og:title" content="Disassembly annotation pipeline">
+  <meta property="og:description" content="Record a product teardown, talk through each step, and get a structured disassembly log back from Gemini.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e7c86'/%3E%3Cpath d='M9 23l9-9m0 0l2-5 4 4-5 2z' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css?v=14">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <nav aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#output">Output</a>
+      <a href="#setup">Setup</a>
+      <a href="#run">Running</a>
+      <a href="#ideas">Ideas</a>
+      <a href="https://github.com/Floris-deGroot/auto_disassembly_mapping">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero wrap">
+    <h1>Disassembly annotation pipeline</h1>
+    <p class="lead">A research prototype that processes a recorded video of a manual product teardown and generates structured disassembly annotations using Gemini's multimodal vision + audio model. Built for a TU Delft MSc graduation project on shared-use disassembly tools.</p>
+    <p class="lead">The annotation structure is based on the <strong>Disassembly Map method</strong> (De Fazio et al., 2021), capturing tool, connector type, force, reusability, and automation suitability per step.</p>
+    <p>Right now it only works with the Google Gemini API.</p>
+  </section>
+
+  <section id="video" class="wrap section">
+    <h2>YouTube video</h2>
+    <div class="video"><iframe src="https://www.youtube-nocookie.com/embed/721DLPzHvgc" title="Disassembly pipeline in action" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+  </section>
+
+  <section id="how" class="wrap section">
+    <h2>How it works</h2>
+    <img src="assets/workflow-sketch.png" width="1788" height="577" alt="Sketch of the workflow: 1. disassemble while the script records, 2. narrate the action using the disassembly card, 3. analysis through a multimodal model, 4. structured disassembly log output.">
+    <p class="prose">You record yourself disassembling a product with OBS (top-down camera + audio). The pipeline then:</p>
+    <ol class="prose">
+      <li>Slices the video into one clip per step</li>
+      <li>Lets you keep/skip clips interactively</li>
+      <li>Sends each clip to Gemini for structured annotation (vision + speech)</li>
+      <li>Consolidates everything into a JSON + Markdown report</li>
+    </ol>
+
+    <p class="prose">While recording, you press SPACE twice per step. Once when the action is done and once when you are done talking about it.</p>
+
+    <div class="timeline" role="img" aria-label="Timeline: R starts recording. Action, SPACE, narration, SPACE, then the next action and narration. ESC stops. Each action plus narration becomes one clip.">
+      <div class="tl-track">
+        <span class="seg act" style="flex:3">Action</span>
+        <span class="seg nar" style="flex:2">Narrate</span>
+        <span class="seg act" style="flex:3">Action</span>
+        <span class="seg nar" style="flex:2">Narrate</span>
+      </div>
+      <div class="tl-keys">
+        <kbd style="left:0%" class="first">R</kbd>
+        <kbd style="left:30%">SPACE</kbd>
+        <kbd style="left:50%">SPACE</kbd>
+        <kbd style="left:80%">SPACE</kbd>
+        <kbd style="left:100%" class="last">SPACE, ESC</kbd>
+      </div>
+      <div class="tl-clips">
+        <span style="flex:5">step_01.mp4</span>
+        <span style="flex:5">step_02.mp4</span>
+      </div>
+    </div>
+    <p class="prose">Each step becomes one clip with the action and your narration. What to say is on the narration card below (<a href="narration_card.html">printable version</a>).</p>
+
+    <div class="narration-card" id="narration-card">
+      <h3>Narration card</h3>
+
+      <h4>Workflow per step</h4>
+      <ol>
+        <li>Perform the disassembly action</li>
+        <li>Place removed component in staging area</li>
+        <li>Press <kbd>SPACE</kbd> to mark step boundary</li>
+        <li>Narrate the parameters below</li>
+        <li>Press <kbd>SPACE</kbd> again when ready for next step</li>
+      </ol>
+
+      <h4>Say after each step</h4>
+      <dl class="fields">
+        <dt>Component</dt><dd>"I just removed the [name/description]"</dd>
+        <dt>Connector type</dt><dd>"It was connected by..."<span class="options"><span class="option opt-green">snap-fit</span><span class="option opt-green">friction fit</span><span class="option opt-amber">adhesive</span><span class="option opt-amber">screw</span><span class="option opt-red">welded</span><span class="option opt-gray">crimped</span><span class="option opt-gray">other</span></span></dd>
+        <dt>Tool used</dt><dd>"I used..."<span class="options"><span class="option opt-green">hands only</span><span class="option opt-blue">spudger</span><span class="option opt-blue">pliers</span><span class="option opt-purple">screwdriver</span><span class="option opt-purple">heat gun</span><span class="option opt-gray">knife/blade</span></span></dd>
+        <dt>Force level</dt><dd>"The force was..."<span class="options"><span class="option opt-green">low · fingertip · &lt;5N</span><span class="option opt-amber">moderate · wrist · 5–20N</span><span class="option opt-red">high · arm/body · &gt;20N</span></span></dd>
+        <dt>Connector survived?</dt><dd>"The connector is [intact / damaged / destroyed]"</dd>
+        <dt>Visibility</dt><dd>"The connector was [visible / hidden before starting]"</dd>
+        <dt>Repositioning?</dt><dd>"I [did / did not] need to reposition the product"</dd>
+      </dl>
+
+      <h4>Dependencies (ask yourself)</h4>
+      <ul>
+        <li>Was this step necessary to reach the target component?</li>
+        <li>Could something else have been removed first instead?</li>
+        <li>Could this have been done in parallel with another step?</li>
+        <li>Is the next step blocked until this one is complete?</li>
+      </ul>
+      <p>Say it out loud: "This step was [required before / independent of] the previous one"</p>
+
+      <h4>Before you start</h4>
+      <ul>
+        <li>Camera positioned top-down with ruler in frame for scale</li>
+        <li>Clear staging area to the side for removed components</li>
+        <li>OBS open (video + audio), not recording yet</li>
+        <li>Hotkey logger running (<code>01_capture.py</code>), press <kbd>R</kbd> to start recording</li>
+        <li>Tools laid out: spudger, pliers, screwdriver set, blade</li>
+        <li>State target components on camera before starting</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="output" class="wrap section">
+    <h2>Output</h2>
+    <p class="prose">You get a <code>disassembly_log.json</code> and a readable <code>disassembly_log.md</code>.</p>
+
+    <p class="prose">For every step the model fills in:</p>
+    <dl class="fields">
+      <dt>Component</dt><dd>The part that came off</dd>
+      <dt>Tool</dt><dd>Hands, spudger, pliers, screwdriver, heat gun, knife…</dd>
+      <dt>Action</dt><dd>Pulling, prying, twisting, cutting, unscrewing, peeling, sliding</dd>
+      <dt>Connector</dt><dd>Snap fit, friction fit, adhesive, screw, weld, crimp</dd>
+      <dt>Force</dt><dd>Low, moderate or high</dd>
+      <dt>Reusable</dt><dd>Whether the connector survived</dd>
+      <dt>Penalties</dt><dd>Things that make a step harder, from the Disassembly Map: product manipulation, hidden connector, uncommon tool, non-reusable connector</dd>
+      <dt>Uncertainties</dt><dd>What the model could not tell</dd>
+      <dt>Confidence</dt><dd>High, medium or low, per field</dd>
+    </dl>
+  </section>
+
+  <section id="setup" class="wrap section">
+    <h2>Setup</h2>
+    <p class="prose">You need a terminal for this: Terminal on macOS, PowerShell on Windows.</p>
+
+    <ol class="steps">
+      <li>
+        <h3>What you need</h3>
+        <ul>
+          <li>A laptop (I only tested it on macOS)</li>
+          <li>A camera looking down at your work surface, and a microphone</li>
+          <li><a href="https://www.python.org/downloads/">Python</a> 3.10 or newer</li>
+          <li>A Google account for the API key</li>
+        </ul>
+        <img src="assets/workspace-sketch.png" width="1812" height="988" alt="Sketch of the workspace: a webcam looking down at the zone of capture, with the object to be disassembled, the tools, and a laptop showing the narration card and the OBS preview.">
+      </li>
+
+      <li>
+        <h3>Download the code</h3>
+        <pre><code>git clone https://github.com/Floris-deGroot/auto_disassembly_mapping.git
+cd auto_disassembly_mapping</code></pre>
+        <p>If you don't have git, you can also download it on the <a href="https://github.com/Floris-deGroot/auto_disassembly_mapping">GitHub page</a>. Click <b>Code → Download ZIP</b> and unzip it. To open that folder in the terminal, type <code>cd</code> and a space, drag the folder into the terminal window and press Enter.</p>
+      </li>
+
+      <li>
+        <h3>Install the requirements</h3>
+        <p>In the project folder, install the packages from <code>requirements.txt</code>:</p>
+        <pre><code>pip install -r requirements.txt</code></pre>
+      </li>
+
+      <li>
+        <h3>Install ffmpeg</h3>
+        <p>ffmpeg cuts the video into clips.</p>
+        <div class="os-group">
+          <pre data-os="macOS" data-label="macOS (needs Homebrew)"><code>brew install ffmpeg</code></pre>
+          <pre data-os="Windows" data-label="Windows"><code>winget install Gyan.FFmpeg</code></pre>
+          <pre data-os="Linux" data-label="Linux"><code>sudo apt install ffmpeg</code></pre>
+        </div>
+        <p>On macOS this needs <a href="https://brew.sh">Homebrew</a>.</p>
+      </li>
+
+      <li>
+        <h3>Set up OBS</h3>
+        <p>Download <a href="https://obsproject.com">OBS Studio</a>. Then:</p>
+        <ul>
+          <li>Add your top-down camera as a <b>Video Capture Device</b> source, and check that your mic shows up in the Audio Mixer.</li>
+          <li><b>Settings → Output → Recording</b>: set the Recording Path to the <code>data/raw</code> folder inside the project, and the Recording Format to MP4.</li>
+          <li><b>Tools → WebSocket Server Settings</b>: tick <b>Enable WebSocket server</b>, click <b>Show Connect Info</b> and copy the Server Password.</li>
+        </ul>
+      </li>
+
+      <li>
+        <h3>Get an API key</h3>
+        <p>Go to <a href="https://aistudio.google.com">Google AI Studio</a>, sign in and click <b>Get API key → Create API key</b>.</p>
+        <p class="warning"><b>Do not share your API key online.</b> Other people can use it, and you pay for it.</p>
+        <ul>
+          <li>The free tier works for testing but has rate limits. One long disassembly video cost me around €0.07.</li>
+          <li>On the free tier Google may use what you upload to improve its products. Check the terms before you record anything sensitive.</li>
+        </ul>
+      </li>
+
+      <li>
+        <h3>Add your keys</h3>
+        <div class="os-group">
+          <pre data-os="macOS" data-label="macOS"><code>cp .env.example .env
+open -e .env</code></pre>
+          <pre data-os="Windows" data-label="Windows"><code>copy .env.example .env
+notepad .env</code></pre>
+          <pre data-os="Linux" data-label="Linux"><code>cp .env.example .env
+nano .env</code></pre>
+        </div>
+        <p>This makes the <code>.env</code> file and opens it. It's a hidden file, so you won't see it in Finder. Fill in both values:</p>
+        <pre><code>GEMINI_API_KEY=your-key-here
+OBS_WS_PASSWORD=your-obs-websocket-password</code></pre>
+        <p>Keep this file to yourself. It's in <code>.gitignore</code>, so it won't end up on GitHub.</p>
+      </li>
+
+      <li>
+        <h3>Do a test run</h3>
+        <p>Open OBS, then go through <a href="#run">Running a teardown</a> with two quick fake steps. If you get a log at the end, you're set.</p>
+        <details>
+          <summary>Something not working?</summary>
+          <dl class="trouble">
+            <dt>Key presses do nothing (macOS)</dt>
+            <dd>System Settings → Privacy &amp; Security → <b>Input Monitoring</b>: allow your terminal app. You might need <b>Accessibility</b> too. Restart the terminal after.</dd>
+            <dt>Failed to connect to OBS</dt>
+            <dd>OBS has to be open, the WebSocket server enabled, and the password in <code>.env</code> has to match.</dd>
+            <dt>No .mp4 found in data/raw</dt>
+            <dd>Check the Recording Path and Recording Format in OBS.</dd>
+            <dt>Linux</dt>
+            <dd>The key listener needs an X11 session. It might not work on Wayland.</dd>
+            <dt>Gemini errors 429 or 503</dt>
+            <dd>The script already retries a few times. If it still fails, wait a bit and run it again. Steps that are done get skipped.</dd>
+            <dt>python or pip: command not found</dt>
+            <dd>Use <code>python3</code> and <code>pip3</code> (macOS/Linux) or <code>py</code> (Windows).</dd>
+            <dt>error: externally-managed-environment</dt>
+            <dd>Your Python doesn't allow installing packages globally. Make a virtual environment first with <code>python3 -m venv .venv</code> and <code>source .venv/bin/activate</code> (Windows: <code>.venv\Scripts\activate</code>), then run the pip command again.</dd>
+          </dl>
+        </details>
+      </li>
+    </ol>
+  </section>
+
+  <section id="run" class="wrap section">
+    <h2>Running a teardown</h2>
+    <p class="prose">Open OBS and run the scripts one by one. You can re-run any script if something goes wrong.</p>
+
+    <ol class="run">
+      <li>
+        <pre><code>python 01_capture.py</code></pre>
+        <p>Asks for a product label, then waits. <kbd>R</kbd> starts recording. <kbd>SPACE</kbd> when an action is done, talk, <kbd>SPACE</kbd> when you are done talking. <kbd>ESC</kbd> stops and saves.</p>
+      </li>
+      <li>
+        <pre><code>python 02_segment.py</code></pre>
+        <p>Cuts the recording into one clip per step.</p>
+      </li>
+      <li>
+        <pre><code>python 03_prune.py</code></pre>
+        <p>Shows a thumbnail per clip. <kbd>y</kbd> keep, <kbd>s</kbd> skip, <kbd>r</kbd> watch the clip.</p>
+      </li>
+      <li>
+        <pre><code>python 04_analyze.py</code></pre>
+        <p>Sends each kept clip to Gemini.</p>
+      </li>
+      <li>
+        <pre><code>python 05_consolidate.py</code></pre>
+        <p>Merges everything into <code>data/output/disassembly_log.json</code> and <code>.md</code>.</p>
+      </li>
+      <li>
+        <pre><code>python archive_run.py</code></pre>
+        <p>Copies the run to <code>successful_runs/</code> and clears the working folders for the next one.</p>
+      </li>
+    </ol>
+    <p class="prose">Print the <a href="narration_card.html">narration card</a> or keep it on a second screen while you record.</p>
+  </section>
+
+  <section id="adapt" class="wrap section">
+    <h2>Make it your own</h2>
+    <dl class="fields wide">
+      <dt>Product label</dt><dd>Asked when you start <code>01_capture.py</code>. The default is in <code>config.py</code>.</dd>
+      <dt>Target components</dt><dd><code>TARGET_COMPONENTS</code> in <code>05_consolidate.py</code>: the parts you want to get out.</dd>
+      <dt>The prompt</dt><dd><code>prompts/step_analysis.txt</code></dd>
+      <dt>The model</dt><dd><code>GEMINI_MODEL</code> in <code>config.py</code>.</dd>
+      <dt>Without narration</dt><dd>Run <code>04_analyze_no_narration.py</code>, then <code>05_consolidate.py --no-narration</code>. It only sends the action part of each clip, so you can compare how much the narration adds.</dd>
+    </dl>
+  </section>
+
+  <section id="ideas" class="wrap section">
+    <h2>Ideas to improve it</h2>
+    <p class="prose">These are some possible directions to take this project further.</p>
+    <div class="cards">
+      <article class="card">
+        <h3>Automate the Disassembly Map</h3>
+        <p>The original method (De Fazio et al., 2021) ends with a visual map: a tree from the complete product down to each component, with the connector, tool, force and penalties on every branch. This pipeline stops at a Markdown table. Most of what goes on the map is already in the log, even the four penalties. What is missing is which steps depend on each other. The model could get that from the narration, and a tool like Graphviz could then draw the map from the JSON.</p>
+      </article>
+      <article class="card">
+        <h3>Try a different model</h3>
+        <p>Gemini takes video and audio in one go, which is why I used it. Most other models only take images, so you would have to pull out frames and transcribe the narration separately.</p>
+      </article>
+      <article class="card">
+        <h3>Run it on your own laptop</h3>
+        <p>It would be interesting to see how far local models can be pushed. For example with a local vision model or a local speech-to-text model, depending on the hardware of your laptop.</p>
+      </article>
+      <article class="card">
+        <h3>Build a standalone station</h3>
+        <p>Image quality is important for vision models, so it would be interesting to design a workstation around this. For example with set places for the tools, and a spot to put the removed components so they are always captured.</p>
+      </article>
+      <article class="card">
+        <h3>Know which tool is in use</h3>
+        <p>In my experience, the model often had trouble detecting which tool was actually being used. A tool holder station with some sensing that detects which tool is currently in use would be interesting.</p>
+      </article>
+      <article class="card">
+        <h3>Skip the hotkeys</h3>
+        <p>Find where one step ends and the next begins from the video and audio, so you don't have to press SPACE at all.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="references" class="wrap section">
+    <h2>References</h2>
+    <p class="reference">De Fazio, F., Bakker, C., Flipsen, B., &amp; Balkenende, R. (2021). The Disassembly Map: A new method to enhance design for product repairability. <i>Journal of Cleaner Production, 320</i>, 128552. <a href="https://doi.org/10.1016/j.jclepro.2021.128552">https://doi.org/10.1016/j.jclepro.2021.128552</a></p>
+  </section>
+
+  <section id="contact" class="wrap section">
+    <h2>Contact</h2>
+    <p>For any questions, reach out to me: <a href="mailto:floris.de.groot.0110@gmail.com">floris.de.groot.0110@gmail.com</a></p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p><a href="https://github.com/Floris-deGroot/auto_disassembly_mapping">Source on GitHub</a> · <a href="https://github.com/Floris-deGroot/auto_disassembly_mapping/blob/main/LICENSE">MIT License</a></p>
+  </div>
+</footer>
+
+<script src="script.js?v=14"></script>
+</body>
+</html>
