@@ -6,7 +6,7 @@ import time
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from config import GEMINI_MODEL
+from config import GEMINI_MODEL, DEFAULT_PRODUCT
 
 load_dotenv()
 
@@ -14,7 +14,6 @@ PRUNED_MANIFEST_PATH = os.path.join(os.path.dirname(__file__), "data", "manifest
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "data", "output")
 PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "step_analysis.txt")
 
-PRODUCT = "small electronic device"
 RATE_LIMIT_SLEEP = 5  # seconds between API calls
 MAX_RETRIES = 3
 RETRY_BACKOFF_S = [15, 45, 90]  # wait between retries
@@ -46,7 +45,7 @@ def wait_for_file(client, video_file):
     return video_file
 
 
-def analyze_clip(client, model_name, clip, prompt_template):
+def analyze_clip(client, model_name, clip, prompt_template, product):
     n = clip["step"]
     clip_path = clip["clip_path"]
     duration = clip["duration_s"]
@@ -56,7 +55,7 @@ def analyze_clip(client, model_name, clip, prompt_template):
         .replace("<<step_number>>", str(n))
         .replace("<<action_split_s>>", str(round(action_split, 1)))
         .replace("<<duration_s>>", str(round(duration, 1)))
-        .replace("<<product>>", PRODUCT)
+        .replace("<<product>>", product)
     )
 
     print(f"  Uploading {os.path.basename(clip_path)} ...", end=" ", flush=True)
@@ -109,12 +108,14 @@ def main():
     with open(PRUNED_MANIFEST_PATH) as f:
         manifest = json.load(f)
 
+    product = manifest.get("product") or DEFAULT_PRODUCT
     prompt_template = load_prompt()
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     clips = [c for c in manifest["clips"] if c.get("status") == "keep"]
     skipped = len(manifest["clips"]) - len(clips)
     print(f"=== Gemini analysis — {len(clips)} clips to process ({skipped} skipped) ===")
+    print(f"Product: {product}")
     print()
 
     uploaded_files = []
@@ -133,7 +134,7 @@ def main():
         print(f"Step {n:02d} ({i + 1}/{len(clips)})")
 
         try:
-            video_file, response_text = analyze_clip(client, GEMINI_MODEL, clip, prompt_template)
+            video_file, response_text = analyze_clip(client, GEMINI_MODEL, clip, prompt_template, product)
             uploaded_files.append(video_file)
 
             annotation = json.loads(strip_fences(response_text))

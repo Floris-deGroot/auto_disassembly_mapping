@@ -4,12 +4,16 @@ import os
 import sys
 from datetime import date
 
+from config import DEFAULT_PRODUCT
+
 PRUNED_MANIFEST_PATH = os.path.join(os.path.dirname(__file__), "data", "manifest", "pruned_manifest.json")
+NO_NARRATION = "--no-narration" in sys.argv  # consolidate the vision-only variant instead
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "data", "output")
+if NO_NARRATION:
+    OUTPUT_DIR = os.path.join(OUTPUT_DIR, "no_narration")
 LOG_JSON_PATH = os.path.join(OUTPUT_DIR, "disassembly_log.json")
 LOG_MD_PATH = os.path.join(OUTPUT_DIR, "disassembly_log.md")
 
-PRODUCT = "small electronic device"
 OPERATOR = ""
 TARGET_COMPONENTS = {
     "primary": ["Lithium battery"],
@@ -22,7 +26,7 @@ def load_annotations():
     paths = sorted(glob.glob(pattern))
     if not paths:
         print(f"No annotation files found in {OUTPUT_DIR}")
-        print("Run 04_analyze.py first.")
+        print("Run 04_analyze_no_narration.py first." if NO_NARRATION else "Run 04_analyze.py first.")
         sys.exit(1)
 
     annotations = []
@@ -82,9 +86,9 @@ def total_duration(pruned_manifest, annotations):
     return round(sum(c["duration_s"] for c in clips), 1)
 
 
-def build_markdown(annotations):
+def build_markdown(annotations, product):
     lines = [
-        f"# Disassembly log — {PRODUCT}",
+        f"# Disassembly log — {product}",
         f"**Date:** {date.today()}  **Operator:** {OPERATOR}",
         "",
         "| Step | Component | Connector | Tool | Force | Reusable | Robot difficulty |",
@@ -135,6 +139,7 @@ def main():
     with open(PRUNED_MANIFEST_PATH) as f:
         pruned_manifest = json.load(f)
 
+    product = pruned_manifest.get("product") or DEFAULT_PRODUCT
     annotations = load_annotations()
     annotations.sort(key=lambda a: a.get("step_number", 0))
     print(f"Loaded {len(annotations)} annotation(s)")
@@ -144,7 +149,7 @@ def main():
 
     log = {
         "metadata": {
-            "product": PRODUCT,
+            "product": product,
             "date": str(date.today()),
             "operator": OPERATOR,
             "target_components": TARGET_COMPONENTS,
@@ -174,7 +179,7 @@ def main():
         json.dump(log, f, indent=2)
     print(f"JSON log   → {LOG_JSON_PATH}")
 
-    md = build_markdown(annotations)
+    md = build_markdown(annotations, product)
     with open(LOG_MD_PATH, "w") as f:
         f.write(md)
     print(f"Markdown   → {LOG_MD_PATH}")

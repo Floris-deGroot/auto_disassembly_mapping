@@ -105,6 +105,7 @@ def main():
     # Write segments manifest
     output = {
         "session_start": manifest.get("session_start"),
+        "product": manifest.get("product"),
         "video_source": video_path,
         "clips": clips,
     }

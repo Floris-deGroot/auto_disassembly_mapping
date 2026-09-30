@@ -84,6 +84,7 @@ def main():
 
     output = {
         "session_start": manifest.get("session_start"),
+        "product": manifest.get("product"),
         "video_source": manifest.get("video_source"),
         "clips": results,
     }

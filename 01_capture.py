@@ -5,13 +5,14 @@ from datetime import datetime
 from pynput import keyboard
 import obsws_python as obs
 
-from config import OBS_HOST, OBS_PORT, OBS_PASSWORD
+from config import OBS_HOST, OBS_PORT, OBS_PASSWORD, DEFAULT_PRODUCT
 
 MANIFEST_DIR = os.path.join(os.path.dirname(__file__), "data", "manifest")
 MANIFEST_PATH = os.path.join(MANIFEST_DIR, "step_manifest.json")
 
 start_time = None
 session_start_iso = None
+product = DEFAULT_PRODUCT
 steps = []
 phase = "action"  # alternates: "action" -> "narration" -> "action" ...
 step_number = 0
@@ -29,6 +30,7 @@ def save_manifest():
     os.makedirs(MANIFEST_DIR, exist_ok=True)
     data = {
         "session_start": session_start_iso,
+        "product": product,
         "steps": steps,
     }
     with open(MANIFEST_PATH, "w") as f:
@@ -93,9 +95,12 @@ def on_press(key):
 
 
 def main():
-    global obs_client
+    global obs_client, product
 
     print("=== Disassembly step logger ===")
+    product = input(f"Product label [{DEFAULT_PRODUCT}]: ").strip() or DEFAULT_PRODUCT
+    print(f"Product: {product}")
+    print()
     print(f"Connecting to OBS at {OBS_HOST}:{OBS_PORT} ...", end=" ", flush=True)
     try:
         obs_client = obs.ReqClient(host=OBS_HOST, port=OBS_PORT, password=OBS_PASSWORD)

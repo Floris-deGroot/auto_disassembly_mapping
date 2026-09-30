@@ -18,10 +18,9 @@ The annotation structure is based on the **Disassembly Map method** (De Fazio et
 [Segment by step markers]  →  [Manual pruning / review]
          ↓
     per-step video clips
-      ↙          ↘
-[Gemini vision     [Acoustic peak
- + speech analysis]  detection] (optional)
-      ↘          ↙
+         ↓
+[Gemini vision + speech analysis]
+         ↓
 [Consolidate into step log]
          ↓
   structured JSON output
@@ -52,9 +51,8 @@ Both segments are valuable: the action footage feeds visual analysis, the narrat
 - **pynput** — keyboard listener for the hotkey logger
 - **obsws-python** — OBS WebSocket client for remote record control
 - **python-dotenv** — loads `.env` secrets into environment variables
-- **google-genai** — Gemini API for vision + audio analysis (use `google-generativeai` package)
-- **scipy** — optional, for acoustic peak detection
-- **Gemini model**: use `gemini-2.0-flash` (multimodal: video + audio input, good balance of speed and capability)
+- **google-genai** — Gemini API for vision + audio analysis
+- **Gemini model**: use `gemini-2.5-flash` (multimodal: video + audio input, good balance of speed and capability)
 
 The user has a Google AI Studio Pro subscription. API key will be set as environment variable `GEMINI_API_KEY`.
 
@@ -71,7 +69,6 @@ disassembly-pipeline/
 ├── 03_prune.py               # interactive review of clips (keep/skip)
 ├── 04_analyze.py             # sends clips to Gemini for annotation
 ├── 05_consolidate.py         # merges per-step annotations into full log
-├── 06_peak_detect.py         # optional: acoustic transient detection
 ├── prompts/
 │   └── step_analysis.txt     # the Gemini prompt template
 ├── data/
@@ -91,7 +88,8 @@ disassembly-pipeline/
 
 **Behavior:**
 
-- On start, connects to OBS WebSocket (`obsws_python`); credentials loaded from `.env` via `python-dotenv`
+- On start, asks for a product label (Enter = `DEFAULT_PRODUCT` from `config.py`); it is stored in the manifest and carried through to the analysis prompt and the final log
+- Then connects to OBS WebSocket (`obsws_python`); credentials loaded from `.env` via `python-dotenv`
 - **R** → starts OBS recording and the internal timer simultaneously
 - Uses a **two-press alternating pattern** (only active after R):
     - First SPACE press → logs timestamp with phase `"end_action"` (physical step just finished)
@@ -107,6 +105,7 @@ disassembly-pipeline/
 ```json
 {
   "session_start": "2026-04-24T14:30:00",
+  "product": "small electronic device",
   "steps": [
     {
       "step": 1,
@@ -192,30 +191,31 @@ Use `-c copy` for speed (no re-encoding). If this causes keyframe issues, fall b
 **Gemini API usage pattern:**
 
 ```python
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-2.0-flash")
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 # Upload video file
-video_file = genai.upload_file(path="data/clips/step_01.mp4")
+video_file = client.files.upload(file="data/clips/step_01.mp4")
 
 # Wait for processing
 import time
 while video_file.state.name == "PROCESSING":
     time.sleep(2)
-    video_file = genai.get_file(video_file.name)
+    video_file = client.files.get(name=video_file.name)
 
 # Generate analysis
-response = model.generate_content(
-    [video_file, prompt_text],
-    generation_config=genai.GenerationConfig(
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents=[video_file, prompt_text],
+    config=types.GenerateContentConfig(
         response_mime_type="application/json"
-    )
+    ),
 )
 ```
 
-**Important:** After all steps are processed, clean up uploaded files with `genai.delete_file()`.
+**Important:** After all steps are processed, clean up uploaded files with `client.files.delete(name=...)`.
 
 ---
 
@@ -331,28 +331,6 @@ The markdown output should be formatted as a table for easy scanning:
 
 ---
 
-### 06_peak_detect.py — Acoustic event detection (optional)
-
-**Purpose:** Detect sharp transient sounds in the audio track that may indicate mechanical events (snap-fit release, cracking, tool impact).
-
-**Behavior:**
-
-- Extract audio from each clip: `ffmpeg -i clip.mp4 -vn -acodec pcm_s16le -ar 16000 clip.wav`
-- Load with scipy.io.wavfile
-- Compute short-time energy envelope (window ~20ms)
-- Use `scipy.signal.find_peaks` with prominence threshold to detect transients
-- Classify peaks roughly by spectral characteristics:
-    - High-frequency, short duration → snap/click
-    - Lower-frequency, longer → crack/break
-    - Very short, any frequency → tool impact/drop
-- Output: list of acoustic events with timestamps for each clip
-
-This is a nice-to-have. Build it last, keep it simple. Even just logging "transient detected at t=X.Xs" per clip is useful — the human or Gemini can interpret.
-
-**Output:** `data/output/acoustic_events.json`
-
----
-
 ## Output schema (disassembly_log.json template)
 
 ```json
@@ -403,9 +381,6 @@ python 04_analyze.py
 
 # 5. Consolidate into final output
 python 05_consolidate.py
-
-# Optional: acoustic peak detection
-python 06_peak_detect.py
 ```
 
 ## Important notes for implementation

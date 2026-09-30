@@ -35,6 +35,7 @@ In OBS, also set your recording output folder to `data/raw/`.
 ```bash
 # 1. Start the hotkey logger (BEFORE starting OBS recording)
 python 01_capture.py
+#   asks for a product label first (Enter = default)
 #   R     → starts OBS recording + timer
 #   SPACE → end of action / end of narration (alternating)
 #   ESC   → stops OBS, saves manifest
@@ -59,13 +60,11 @@ python archive_run.py
 
 ## Variants
 
-- **`04_analyze_no_narration.py`** — vision-only variant for controlled comparison. Trims clips to the action phase only and uses a narration-free prompt. For measuring how much the spoken annotation contributes to annotation quality.
+- **`04_analyze_no_narration.py`** — vision-only variant for controlled comparison. Trims clips to the action phase only and uses a narration-free prompt. For measuring how much the spoken annotation contributes to annotation quality. Writes to `data/output/no_narration/`, so it doesn't clash with the narrated run; consolidate it with `python 05_consolidate.py --no-narration`.
 
 ## Configuration
 
-Edit at the top of the analysis scripts:
-
-- `PRODUCT` (in `04_analyze.py`, `04_analyze_no_narration.py`, `05_consolidate.py`) — generic product label sent in the prompt
+- **Product label** — entered when you start `01_capture.py` and saved in the manifest; the analysis scripts send it in the prompt and `05_consolidate.py` puts it in the log. Press Enter to use `DEFAULT_PRODUCT` from `config.py`. To change it after recording, edit `"product"` in `data/manifest/pruned_manifest.json`.
 - `TARGET_COMPONENTS` (in `05_consolidate.py`) — primary/secondary components you're trying to recover
 - `GEMINI_MODEL` (in `config.py`) — currently `gemini-2.5-flash` Cost for one long disassembly video was roughly around € 0.07
 
