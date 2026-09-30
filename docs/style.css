@@ -6,8 +6,8 @@
   --muted: #666;
   --line: #ddd;
   --code-bg: #f4f4f4;
-  --font: Calibri, Carlito, "Segoe UI", Arial, sans-serif;
-  --mono: Consolas, Menlo, "Courier New", monospace;
+  --font: Carlito, Calibri, Arial, sans-serif;
+  --mono: Inconsolata, Consolas, Menlo, monospace;
 }
 
 * { box-sizing: border-box; }
